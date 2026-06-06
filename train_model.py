@@ -23,16 +23,23 @@ import numpy as np
 
 
 class MnistMLP(nn.Module):
-    """Small MLP for MNIST: 784 -> 64 -> 32 -> 10, ReLU activations."""
+    """Small MLP for MNIST: 784 -> 64 -> 32 -> 10, ReLU activations.
+
+    Accepts both (batch, 784) flat inputs and (batch, 1, 28, 28) image inputs.
+    The Flatten is included in the ONNX graph so alpha-beta-CROWN's MNIST
+    data loader (which returns 28x28 images) works without reshaping.
+    """
 
     def __init__(self):
         super().__init__()
+        self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(784, 64)
         self.fc2 = nn.Linear(64, 32)
         self.fc3 = nn.Linear(32, 10)
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        x = self.flatten(x)
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))
         return self.fc3(x)
@@ -85,7 +92,8 @@ def evaluate(model, loader, device):
 
 def export_onnx(model: nn.Module, path: str):
     model.eval()
-    dummy = torch.zeros(1, 784)
+    # Use (1, 1, 28, 28) so alpha-beta-CROWN's MNIST loader (returns images) works directly.
+    dummy = torch.zeros(1, 1, 28, 28)
     torch.onnx.export(
         model,
         dummy,
@@ -100,7 +108,7 @@ def export_onnx(model: nn.Module, path: str):
 
 def verify_onnx(model: nn.Module, path: str, device):
     model.eval()
-    sample = torch.randn(1, 784)
+    sample = torch.randn(1, 1, 28, 28)
     with torch.no_grad():
         pt_out = model(sample.to(device)).cpu().numpy()
     sess = ort.InferenceSession(path, providers=["CPUExecutionProvider"])

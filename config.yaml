@@ -3,9 +3,11 @@
 # Property: L-inf robustness with epsilon=0.01
 # Matches the property verified in Assignment 3 (Marabou) for comparison.
 
+general:
+  device: cpu   # change to "cuda" if GPU is available
+
 model:
-  onnx_path: models/mnist_mlp.onnx
-  input_shape: [1, 784]
+  onnx_path: $CONFIG_PATH/models/mnist_mlp.onnx
 
 data:
   dataset: MNIST
@@ -29,6 +31,4 @@ bab:
   branching:
     method: kfsb
     candidates: 3
-    reduce_op: min
-  attack:
-    enabled: false
+    reduceop: min
