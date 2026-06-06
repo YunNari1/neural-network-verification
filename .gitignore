@@ -5,3 +5,7 @@ __pycache__/
 data/
 *.pth
 alpha-beta-CROWN/
+out.txt
+out.pkl
+test_cex.txt
+_tmp_cfg_*.yaml
